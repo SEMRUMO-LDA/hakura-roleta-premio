@@ -55,8 +55,12 @@ body {
 @keyframes pulse { 0%,100% { box-shadow: 0 8px 22px -6px rgba(0,0,0,.45), 0 0 0 0 rgba(255,255,255,.7) } 50% { box-shadow: 0 8px 22px -6px rgba(0,0,0,.45), 0 0 0 2.2vmin rgba(255,255,255,0) } }
 
 .side { display: grid; gap: 2.4vh; min-width: 0; width: min(100%, 520px); }
-.title { margin: 0; font-weight: 300; color: #fff; font-size: clamp(30px, 6vh, 64px); line-height: 1.05; text-shadow: 0 2px 14px rgba(60,30,10,.45); }
-.title b { font-weight: 900; display: block; }
+.brand { display: grid; gap: 2vh; color: #fff; text-shadow: 0 2px 14px rgba(60,30,10,.45); }
+.logo { width: min(100%, clamp(160px, 26vh, 300px)); height: auto; filter: drop-shadow(0 2px 10px rgba(60,30,10,.45)); }
+.title { margin: 0; display: grid; gap: .6vh; font-weight: 300; line-height: 1; }
+.anos { display: flex; align-items: baseline; gap: .18em; font-size: clamp(34px, 7vh, 72px); font-weight: 300; letter-spacing: .02em; }
+.anos b { font-weight: 900; font-size: 1.9em; line-height: .8; }
+.title .sub { font-size: clamp(16px, 2.6vh, 26px); font-weight: 400; letter-spacing: .04em; }
 .result { background: var(--surface); border-radius: 26px; padding: 4.5vh 3.2vw; display: grid; gap: 1.2vh; min-height: 40vh; align-content: center;
   box-shadow: 0 24px 60px -24px rgba(40,20,5,.7); border: 3px solid transparent; transition: border-color .3s; }
 .result .eyebrow { font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); font-size: clamp(12px, 1.8vh, 17px); }
@@ -103,13 +107,16 @@ button:focus-visible, .hub:focus-visible, input:focus-visible { outline: 3px sol
     <button class="hub" id="hub" aria-label="Girar a roleta">Girar</button>
   </div>
   <div class="side">
-    <h1 class="title">Roleta de <b>Prémios</b></h1>
+    <header class="brand">
+      <img class="logo" src="img/imgi_4_Asset-25300.svg" alt="Hakura">
+      <h1 class="title"><span class="anos"><b>2</b> anos</span><span class="sub">Roleta de Prémios de aniversário</span></h1>
+    </header>
     <div class="result idle" id="result" aria-live="polite">
-      <span class="eyebrow" id="rEyebrow">Bem-vindo à Hakura</span>
+      <span class="eyebrow" id="rEyebrow">A Hakura faz 2 anos</span>
       <span class="value" id="rValue">Boa sorte!</span>
       <span class="text" id="rText"></span>
-      <span class="detail" id="rDetail">Toque em <b>Girar</b>, no centro da roleta, e descubra o seu prémio.</span>
-      <span class="note" id="rNote" hidden>Fale com a nossa equipa para agendar e usar o seu prémio.</span>
+      <span class="detail" id="rDetail">Para celebrar, temos um prémio para si. Toque em <b>Girar</b>, no centro da roleta.</span>
+      <span class="note" id="rNote" hidden>Obrigado por fazer parte destes 2 anos! Fale com a nossa equipa para agendar.</span>
     </div>
   </div>
 </div>
@@ -217,10 +224,10 @@ let used = false;
 function setIdle() {
   used = false; hub.disabled = false; hub.textContent = "Girar"; app.classList.add("ready");
   result.className = "result idle";
-  $("rEyebrow").textContent = "Bem-vindo à Hakura";
+  $("rEyebrow").textContent = "A Hakura faz 2 anos";
   const v = $("rValue"); v.textContent = "Boa sorte!"; v.classList.remove("long");
   $("rText").textContent = "";
-  $("rDetail").innerHTML = "Toque em <b>Girar</b>, no centro da roleta, e descubra o seu prémio.";
+  $("rDetail").innerHTML = "Para celebrar, temos um prémio para si. Toque em <b>Girar</b>, no centro da roleta.";
   $("rNote").hidden = true;
 }
 function spin() {
