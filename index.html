@@ -11,7 +11,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&display=swap">
 <style>
 html, body { margin: 0; }
-/* Layout: kiosk for a reception tablet — a small title, the wheel filling the screen, result as an overlay */
+/* Layout: landscape kiosk for a reception tablet — wheel on the left (spin button in its centre), prize card on the right, "Novo cliente" in the corner */
 :root {
   --bg: #c48a55;
   --surface: rgba(255, 255, 255, .95);
@@ -32,38 +32,42 @@ body {
   color: var(--fg); font-family: var(--font); overflow: hidden;
   user-select: none; -webkit-user-select: none; touch-action: manipulation;
 }
-.app { height: 100%; display: grid; grid-template-rows: auto 1fr auto; justify-items: center; align-items: center;
-  padding-inline: 16px; padding-block: 2.2vh; gap: 1.2vh; }
+.app { height: 100%; display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; justify-content: center;
+  gap: 4vw; padding-inline: max(16px, 3vw); padding-block: 3vh; }
+@media (orientation: portrait) { .app { grid-template-columns: 1fr; grid-template-rows: auto auto; justify-items: center; align-content: center; } }
 
-.title { background: var(--surface); border-radius: 999px; padding: .5em 1.6em; box-shadow: 0 10px 30px -18px rgba(40,20,5,.6);
-  font-weight: 300; color: var(--accent); font-size: clamp(22px, 3.6vh, 40px); letter-spacing: .01em; margin: 0; }
-.title b { font-weight: 900; }
-
-.wheel-box { position: relative; width: min(94vw, calc(100dvh - 11.5vh - 90px)); aspect-ratio: 1; max-width: 100%; }
-#wheel { width: 100%; height: 100%; display: block; border-radius: 50%; box-shadow: 0 30px 70px -24px rgba(40,20,5,.75); cursor: pointer; }
+.wheel-box { position: relative; width: min(58vw, 94dvh); aspect-ratio: 1; max-width: 100%; }
+@media (orientation: portrait) { .wheel-box { width: min(92vw, 62dvh); } }
+#wheel { width: 100%; height: 100%; display: block; border-radius: 50%; box-shadow: 0 30px 70px -24px rgba(40,20,5,.75); }
 .pointer { position: absolute; top: -1.5%; left: 50%; transform: translateX(-50%); width: 8%; z-index: 2; filter: drop-shadow(0 4px 5px rgba(0,0,0,.3)); pointer-events: none; }
-.hub { position: absolute; inset: 50% auto auto 50%; transform: translate(-50%,-50%); width: 21%; aspect-ratio: 1; border-radius: 50%;
-  background: #fff; border: .6vmin solid var(--accent); display: grid; place-items: center; z-index: 2;
-  font: 900 clamp(16px, 3.4vmin, 34px) var(--font); color: var(--accent); letter-spacing: .04em; text-transform: uppercase;
-  cursor: pointer; box-shadow: 0 6px 18px -6px rgba(0,0,0,.35); transition: transform .15s; }
-.hub:active { transform: translate(-50%,-50%) scale(.96); }
-.spinning .hub { color: var(--line); }
+.hub { position: absolute; inset: 50% auto auto 50%; transform: translate(-50%,-50%); width: 22%; aspect-ratio: 1; border-radius: 50%;
+  background: var(--accent); border: .8vmin solid #fff; display: grid; place-items: center; z-index: 2; appearance: none; padding: 0;
+  font: 900 clamp(16px, 3.6vmin, 36px) var(--font); color: #fff; letter-spacing: .05em; text-transform: uppercase;
+  cursor: pointer; box-shadow: 0 8px 22px -6px rgba(0,0,0,.45); transition: transform .15s, background .2s; }
+.hub:active:not(:disabled) { transform: translate(-50%,-50%) scale(.95); }
+.hub:disabled { background: #fff; color: var(--line); cursor: default; border-color: var(--line); }
+.ready .hub { animation: pulse 2.2s ease-in-out infinite; }
+@keyframes pulse { 0%,100% { box-shadow: 0 8px 22px -6px rgba(0,0,0,.45), 0 0 0 0 rgba(255,255,255,.7) } 50% { box-shadow: 0 8px 22px -6px rgba(0,0,0,.45), 0 0 0 2.2vmin rgba(255,255,255,0) } }
 
-.hint { background: var(--surface); border-radius: 999px; padding: .55em 1.4em; font-size: clamp(15px, 2.2vh, 22px); font-weight: 700; color: var(--muted); }
-
-/* result overlay */
-.overlay { position: fixed; inset: 0; z-index: 5; display: grid; place-items: center; padding: 16px;
-  background: rgba(47, 62, 74, .55); backdrop-filter: blur(4px); }
-.card { background: #fff; border-radius: 28px; padding: 5vmin 7vmin; text-align: center; display: grid; gap: 1.2vmin;
-  width: min(640px, 100%); box-shadow: 0 30px 80px -20px rgba(0,0,0,.5); animation: pop .45s cubic-bezier(.2,1.3,.4,1); }
-.card .eyebrow { font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); font-size: clamp(13px, 1.8vmin, 18px); }
-.card .value { font-weight: 900; color: var(--accent); font-size: clamp(64px, 16vmin, 170px); line-height: 1; }
-.card .value.long { font-size: clamp(48px, 10vmin, 110px); }
-.card .text { font-weight: 700; font-size: clamp(22px, 4.2vmin, 44px); line-height: 1.15; text-wrap: balance; }
-.card .detail { color: var(--muted); font-size: clamp(15px, 2.4vmin, 24px); }
-.card button { margin-top: 2vmin; justify-self: center; appearance: none; border: 0; border-radius: 999px; background: var(--accent); color: var(--accent-ink);
-  font: 700 clamp(17px, 2.6vmin, 26px) var(--font); padding: .8em 2.2em; cursor: pointer; }
+.side { display: grid; gap: 2.4vh; min-width: 0; width: min(100%, 520px); }
+.title { margin: 0; font-weight: 300; color: #fff; font-size: clamp(30px, 6vh, 64px); line-height: 1.05; text-shadow: 0 2px 14px rgba(60,30,10,.45); }
+.title b { font-weight: 900; display: block; }
+.result { background: var(--surface); border-radius: 26px; padding: 4.5vh 3.2vw; display: grid; gap: 1.2vh; min-height: 40vh; align-content: center;
+  box-shadow: 0 24px 60px -24px rgba(40,20,5,.7); border: 3px solid transparent; transition: border-color .3s; }
+.result .eyebrow { font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); font-size: clamp(12px, 1.8vh, 17px); }
+.result .value { font-weight: 900; color: var(--accent); font-size: clamp(56px, 13vh, 140px); line-height: .95; }
+.result .value.long { font-size: clamp(44px, 9vh, 96px); }
+.result .text { font-weight: 700; font-size: clamp(22px, 4vh, 40px); line-height: 1.15; text-wrap: balance; }
+.result .detail { color: var(--muted); font-size: clamp(15px, 2.4vh, 22px); line-height: 1.4; }
+.result .note { margin-top: 1vh; padding-top: 1.6vh; border-top: 1px solid var(--line); color: var(--fg); font-weight: 700; font-size: clamp(14px, 2.1vh, 19px); }
+.result.idle .value { color: var(--fg); font-size: clamp(34px, 6.5vh, 64px); font-weight: 300; }
+.result.win { border-color: var(--accent); }
+.result.win .value { animation: pop .5s cubic-bezier(.2,1.3,.4,1); }
 @keyframes pop { from { transform: scale(.7); opacity: 0 } to { transform: none; opacity: 1 } }
+
+.newclient { position: fixed; top: 12px; right: 12px; z-index: 3; appearance: none; border: 0; border-radius: 999px; background: rgba(255,255,255,.88);
+  color: var(--fg); font: 700 15px var(--font); padding: 10px 16px; cursor: pointer; display: flex; gap: 8px; align-items: center; box-shadow: 0 6px 18px -8px rgba(0,0,0,.4); }
+.newclient svg { width: 18px; height: 18px; }
 
 /* staff settings */
 .gear { position: fixed; right: 12px; bottom: 12px; width: 40px; height: 40px; border-radius: 50%; border: 0; background: rgba(255,255,255,.35);
@@ -82,30 +86,33 @@ body {
 
 button:focus-visible, .hub:focus-visible, input:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
 #confetti { position: fixed; inset: 0; pointer-events: none; z-index: 7; width: 100%; height: 100%; }
-@media (prefers-reduced-motion: reduce) { .card { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .result.win .value, .ready .hub { animation: none; } }
 </style>
 </head>
 <body>
 
-<div class="app" id="app">
-  <h1 class="title">Roleta de <b>Prémios</b></h1>
+<div class="app ready" id="app">
   <div class="wheel-box">
     <svg class="pointer" viewBox="0 0 36 46" aria-hidden="true"><path d="M18 45 L2 9 A16 16 0 0 1 34 9 Z" fill="#5399b5" stroke="#fff" stroke-width="2.5"/><circle cx="18" cy="15" r="6" fill="#fff"/></svg>
     <canvas id="wheel" width="1400" height="1400" role="img" aria-label="Roleta com 6 prémios"></canvas>
-    <div class="hub" id="hub" role="button" tabindex="0" aria-label="Girar a roleta">Girar</div>
+    <button class="hub" id="hub" aria-label="Girar a roleta">Girar</button>
   </div>
-  <div class="hint" id="hint">Toque na roleta para girar</div>
+  <div class="side">
+    <h1 class="title">Roleta de <b>Prémios</b></h1>
+    <div class="result idle" id="result" aria-live="polite">
+      <span class="eyebrow" id="rEyebrow">Bem-vindo à Hakura</span>
+      <span class="value" id="rValue">Boa sorte!</span>
+      <span class="text" id="rText"></span>
+      <span class="detail" id="rDetail">Toque em <b>Girar</b>, no centro da roleta, e descubra o seu prémio.</span>
+      <span class="note" id="rNote" hidden>Fale com a nossa equipa para agendar e usar o seu prémio.</span>
+    </div>
+  </div>
 </div>
 
-<div class="overlay" id="overlay" hidden>
-  <div class="card" role="dialog" aria-live="assertive">
-    <span class="eyebrow">Parabéns! Ganhou</span>
-    <span class="value" id="rValue"></span>
-    <span class="text" id="rText"></span>
-    <span class="detail" id="rDetail"></span>
-    <button id="close">Continuar</button>
-  </div>
-</div>
+<button class="newclient" id="newclient" aria-label="Novo cliente: repor a roleta">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>
+  Novo cliente
+</button>
 
 <button class="gear" id="gear" aria-label="Definições da equipa">⚙</button>
 <div class="settings" id="settings" hidden>
@@ -122,12 +129,12 @@ button:focus-visible, .hub:focus-visible, input:focus-visible { outline: 3px sol
 <script>
 // value = linha grande; text = linha(s) pequena(s) por baixo — mesma ordem em todos os prémios
 const PRIZES = [
-  { value: "20%",    text: ["HIFU"],                   full: "em tratamento HIFU",               detail: "Desconto num tratamento HIFU.",                       w: 19 },
-  { value: "10€",    text: ["Vale"],                   full: "Vale para qualquer especialidade", detail: "Para usar em qualquer especialidade.",                w: 19 },
-  { value: "15%",    text: ["Fisioterapia"],           full: "numa sessão de fisioterapia",      detail: "Desconto numa sessão de fisioterapia.",               w: 19 },
-  { value: "Oferta", text: ["Massagem", "50 min"],     full: "Massagem de relaxamento",          detail: "Uma massagem de relaxamento de 50 minutos, por nossa conta.", w: 5 },
-  { value: "25%",    text: ["Pilates"],                full: "em aula de pilates",               detail: "Desconto numa aula de pilates.",                      w: 19 },
-  { value: "30%",    text: ["Massagens", "terapêuticas"], full: "em massagens terapêuticas",     detail: "Desconto em massagens terapêuticas.",                 w: 19 },
+  { value: "20%",    text: ["HIFU"],                   full: "em tratamento HIFU",               detail: "Desconto de 20% num tratamento HIFU.",                       w: 19 },
+  { value: "10€",    text: ["Vale"],                   full: "Vale para qualquer especialidade", detail: "Vale de 10€ para usar em qualquer especialidade da Hakura.",                w: 19 },
+  { value: "15%",    text: ["Fisioterapia"],           full: "numa sessão de fisioterapia",      detail: "Desconto de 15% numa sessão de fisioterapia.",               w: 19 },
+  { value: "Oferta", text: ["Massagem", "50 min"],     full: "Massagem de relaxamento",          detail: "Uma massagem de relaxamento de 50 minutos, oferecida pela Hakura.", w: 5 },
+  { value: "25%",    text: ["Pilates"],                full: "em aula de pilates",               detail: "Desconto de 25% numa aula de pilates.",                      w: 19 },
+  { value: "30%",    text: ["Massagens", "terapêuticas"], full: "em massagens terapêuticas",     detail: "Desconto de 30% em massagens terapêuticas.",                 w: 19 },
 ];
 const DEFAULT_W = PRIZES.map(p => p.w);
 const KEY = "roleta-pesos-v1";
@@ -196,10 +203,24 @@ function tick() {
 }
 
 const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
-const app = document.getElementById("app"), hint = document.getElementById("hint");
+const app = document.getElementById("app"), hub = document.getElementById("hub"), result = document.getElementById("result");
+const $ = id => document.getElementById(id);
+let used = false;
+function setIdle() {
+  used = false; hub.disabled = false; hub.textContent = "Girar"; app.classList.add("ready");
+  result.className = "result idle";
+  $("rEyebrow").textContent = "Bem-vindo à Hakura";
+  const v = $("rValue"); v.textContent = "Boa sorte!"; v.classList.remove("long");
+  $("rText").textContent = "";
+  $("rDetail").innerHTML = "Toque em <b>Girar</b>, no centro da roleta, e descubra o seu prémio.";
+  $("rNote").hidden = true;
+}
 function spin() {
-  if (spinning || !document.getElementById("overlay").hidden) return;
-  spinning = true; app.classList.add("spinning"); hint.textContent = "Boa sorte!";
+  if (spinning || used) return;
+  spinning = true; used = true; hub.disabled = true; app.classList.remove("ready");
+  result.className = "result idle";
+  $("rEyebrow").textContent = "A girar…";
+  $("rValue").textContent = "Boa sorte!"; $("rDetail").textContent = "Vamos ver onde a roleta pára.";
   const win = pick();
   const jitter = (Math.random() - 0.5) * SEG * 0.7;
   const current = ((rot % (Math.PI*2)) + Math.PI*2) % (Math.PI*2);
@@ -219,15 +240,18 @@ function spin() {
 }
 
 function done(i) {
-  spinning = false; app.classList.remove("spinning"); hint.textContent = "Toque na roleta para girar";
+  spinning = false; hub.textContent = "✓";
   const p = PRIZES[i];
-  const v = document.getElementById("rValue"); v.textContent = p.value; v.classList.toggle("long", p.value.length > 4);
-  document.getElementById("rText").textContent = p.full;
-  document.getElementById("rDetail").textContent = p.detail;
-  document.getElementById("overlay").hidden = false;
+  result.className = "result";
+  $("rEyebrow").textContent = "Parabéns! Ganhou";
+  const v = $("rValue"); v.textContent = p.value; v.classList.toggle("long", p.value.length > 4);
+  $("rText").textContent = p.full;
+  $("rDetail").textContent = p.detail;
+  $("rNote").hidden = false;
+  void result.offsetWidth; result.classList.add("win");
   if (!reduce) confetti(i === 3 ? 280 : 140);
 }
-document.getElementById("close").onclick = () => { document.getElementById("overlay").hidden = true; };
+$("newclient").onclick = () => { if (!spinning) { setIdle(); bits = []; } };
 
 // confetti
 const cf = document.getElementById("confetti"), cc = cf.getContext("2d");
@@ -271,9 +295,7 @@ document.getElementById("gear").onclick = () => { renderOdds(); document.getElem
 document.getElementById("done").onclick = () => { document.getElementById("settings").hidden = true; };
 document.getElementById("reset").onclick = () => { DEFAULT_W.forEach((w,i)=>PRIZES[i].w=w); save(); renderOdds(); };
 
-cv.addEventListener("click", spin);
-const hub = document.getElementById("hub");
-hub.onclick = spin; hub.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); spin(); } };
+hub.onclick = spin;
 document.addEventListener("gesturestart", e => e.preventDefault());
 
 // keep tablet screen awake where allowed
