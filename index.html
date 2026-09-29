@@ -16,7 +16,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&display=swap">
 <style>
 html, body { margin: 0; }
-/* Layout: landscape kiosk for a reception tablet — wheel on the left (spin button in its centre), prize card on the right, "Novo cliente" in the corner */
+/* Layout: landscape kiosk for a reception tablet — wheel on the left (spin button in its centre), prize card on the right, staff panel behind the gear holds "Novo cliente" and the odds */
 :root {
   --bg: #c48a55;
   --surface: rgba(255, 255, 255, .95);
@@ -70,9 +70,9 @@ body {
 .result.win .value { animation: pop .5s cubic-bezier(.2,1.3,.4,1); }
 @keyframes pop { from { transform: scale(.7); opacity: 0 } to { transform: none; opacity: 1 } }
 
-.newclient { position: fixed; top: 12px; right: 12px; z-index: 3; appearance: none; border: 0; border-radius: 999px; background: rgba(255,255,255,.88);
-  color: var(--fg); font: 700 15px var(--font); padding: 10px 16px; cursor: pointer; display: flex; gap: 8px; align-items: center; box-shadow: 0 6px 18px -8px rgba(0,0,0,.4); }
-.newclient svg { width: 18px; height: 18px; }
+.btn.big { display: flex; gap: 10px; align-items: center; justify-content: center; font-size: 18px; padding: 16px; border-radius: 14px; }
+.btn.big svg { width: 20px; height: 20px; }
+.panel hr { border: 0; border-top: 1px solid var(--line); margin: 4px 0; width: 100%; }
 
 /* staff settings */
 .gear { position: fixed; right: 12px; bottom: 12px; width: 40px; height: 40px; border-radius: 50%; border: 0; background: rgba(255,255,255,.35);
@@ -114,18 +114,21 @@ button:focus-visible, .hub:focus-visible, input:focus-visible { outline: 3px sol
   </div>
 </div>
 
-<button class="newclient" id="newclient" aria-label="Novo cliente: repor a roleta">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>
-  Novo cliente
-</button>
 
-<button class="gear" id="gear" aria-label="Definições da equipa">⚙</button>
+
+<button class="gear" id="gear" aria-label="Área da equipa">⚙</button>
 <div class="settings" id="settings" hidden>
   <div class="panel">
+    <button class="btn primary big" id="newclient">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>
+      Novo cliente
+    </button>
+    <p>Limpa o prémio e volta a ativar a roleta para o próximo cliente.</p>
+    <hr>
     <h2>Probabilidades</h2>
     <div id="odds" style="display:grid;gap:10px"></div>
     <p>As fatias têm todas o mesmo tamanho. O peso define a probabilidade real de cada prémio e fica guardado neste tablet.</p>
-    <div class="row"><button class="btn" id="reset">Repor valores</button><button class="btn primary" id="done">Fechar</button></div>
+    <div class="row"><button class="btn" id="reset">Repor probabilidades</button><button class="btn primary" id="done">Fechar</button></div>
   </div>
 </div>
 
@@ -256,7 +259,7 @@ function done(i) {
   void result.offsetWidth; result.classList.add("win");
   if (!reduce) confetti(i === 3 ? 280 : 140);
 }
-$("newclient").onclick = () => { if (!spinning) { setIdle(); bits = []; } };
+$("newclient").onclick = () => { if (!spinning) { setIdle(); bits = []; $("settings").hidden = true; } };
 
 // confetti
 const cf = document.getElementById("confetti"), cc = cf.getContext("2d");
