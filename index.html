@@ -114,8 +114,8 @@ button:focus-visible, .hub:focus-visible, input:focus-visible { outline: 3px sol
       <span class="eyebrow" id="rEyebrow">A Hakura faz 2 anos</span>
       <span class="value" id="rValue">Boa sorte!</span>
       <span class="text" id="rText"></span>
-      <span class="detail" id="rDetail">Para celebrar, temos um prémio para si. Toque em <b>Girar</b>, no centro da roleta.</span>
-      <span class="note" id="rNote" hidden>Obrigado por fazer parte destes 2 anos! Fale com a nossa equipa para agendar.</span>
+      <span class="detail" id="rDetail">Para celebrar, temos um prémio para ti. Toca em <b>Girar</b>, no centro da roleta.</span>
+      <span class="note" id="rNote" hidden>Obrigado por fazeres parte destes 2 anos! Fala com a nossa equipa para agendar.</span>
     </div>
     <header class="brand">
       <h1 style="margin:0"><img class="logo" src="img/Hakura_Logo_Branco_Tagline.png" alt="Hakura, Clínica de Bem-Estar"></h1>
@@ -149,7 +149,7 @@ const PRIZES = [
   { value: "20%",    text: ["HIFU"],                   full: "em tratamento HIFU",               detail: "Desconto de 20% num tratamento HIFU.",                       w: 19 },
   { value: "10€",    text: ["Vale"],                   full: "Vale para qualquer especialidade", detail: "Vale de 10€ para usar em qualquer especialidade da Hakura.",                w: 19 },
   { value: "15%",    text: ["Fisioterapia"],           full: "numa sessão de fisioterapia",      detail: "Desconto de 15% numa sessão de fisioterapia.",               w: 19 },
-  { value: "Oferta", text: ["Massagem", "50 min"],     full: "Massagem de relaxamento",          detail: "Uma massagem de relaxamento de 50 minutos, oferecida pela Hakura.", w: 5 },
+  { value: "Oferta", text: ["Massagem", "50 min"],     full: "Massagem de relaxamento (50 min)",          detail: "Uma massagem de relaxamento de 50 minutos, oferecida pela Hakura.", w: 5 },
   { value: "25%",    text: ["Pilates"],                full: "em aula de pilates",               detail: "Desconto de 25% numa aula de pilates.",                      w: 19 },
   { value: "30%",    text: ["Massagens", "terapêuticas"], full: "em massagens terapêuticas",     detail: "Desconto de 30% em massagens terapêuticas.",                 w: 19 },
 ];
@@ -229,7 +229,7 @@ function setIdle() {
   $("rEyebrow").textContent = "A Hakura faz 2 anos";
   const v = $("rValue"); v.textContent = "Boa sorte!"; v.classList.remove("long");
   $("rText").textContent = "";
-  $("rDetail").innerHTML = "Para celebrar, temos um prémio para si. Toque em <b>Girar</b>, no centro da roleta.";
+  $("rDetail").hidden = false; $("rDetail").innerHTML = "Para celebrar, temos um prémio para ti. Toca em <b>Girar</b>, no centro da roleta.";
   $("rNote").hidden = true;
 }
 function spin() {
@@ -237,7 +237,7 @@ function spin() {
   spinning = true; used = true; hub.disabled = true; app.classList.remove("ready");
   result.className = "result idle";
   $("rEyebrow").textContent = "A girar…";
-  $("rValue").textContent = "Boa sorte!"; $("rDetail").textContent = "Vamos ver onde a roleta pára.";
+  $("rValue").textContent = "Boa sorte!"; $("rDetail").hidden = false; $("rDetail").textContent = "Vamos ver onde a roleta pára.";
   const win = pick();
   const jitter = (Math.random() - 0.5) * SEG * 0.7;
   const current = ((rot % (Math.PI*2)) + Math.PI*2) % (Math.PI*2);
@@ -260,10 +260,10 @@ function done(i) {
   spinning = false; hub.textContent = "✓";
   const p = PRIZES[i];
   result.className = "result";
-  $("rEyebrow").textContent = "Parabéns! Ganhou";
+  $("rEyebrow").textContent = "Parabéns! Ganhaste";
   const v = $("rValue"); v.textContent = p.value; v.classList.toggle("long", p.value.length > 4);
   $("rText").textContent = p.full;
-  $("rDetail").textContent = p.detail;
+  $("rDetail").textContent = ""; $("rDetail").hidden = true;
   $("rNote").hidden = false;
   void result.offsetWidth; result.classList.add("win");
   if (!reduce) confetti(i === 3 ? 280 : 140);
