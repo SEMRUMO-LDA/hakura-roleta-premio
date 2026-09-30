@@ -219,6 +219,38 @@ function tick() {
   } catch (e) {}
 }
 
+// som de prémio: pequeno arpejo de sinos (mais longo no prémio especial)
+function winSound(special) {
+  try {
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    const t0 = actx.currentTime + 0.02;
+    const master = actx.createGain(); master.gain.value = 0.22; master.connect(actx.destination);
+    const notes = special ? [523.25, 659.25, 783.99, 1046.5, 1318.5, 1567.98] : [523.25, 659.25, 783.99, 1046.5];
+    const step = special ? 0.11 : 0.12;
+    notes.forEach((f, i) => {
+      const t = t0 + i * step, last = i === notes.length - 1, dur = last ? 1.6 : 0.7;
+      [1, 2.01].forEach((mult, k) => {           // tom + harmónico, som de sino
+        const o = actx.createOscillator(), g = actx.createGain();
+        o.type = "sine"; o.frequency.value = f * mult;
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.exponentialRampToValueAtTime(k ? 0.12 : 0.5, t + 0.015);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+        o.connect(g); g.connect(master); o.start(t); o.stop(t + dur + 0.05);
+      });
+    });
+    if (special) {                                  // acorde final no prémio especial
+      const t = t0 + notes.length * step + 0.05;
+      [523.25, 659.25, 783.99, 1046.5].forEach(f => {
+        const o = actx.createOscillator(), g = actx.createGain();
+        o.type = "triangle"; o.frequency.value = f;
+        g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.18, t + 0.03);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + 2.2);
+        o.connect(g); g.connect(master); o.start(t); o.stop(t + 2.3);
+      });
+    }
+  } catch (e) {}
+}
+
 const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const app = document.getElementById("app"), hub = document.getElementById("hub"), result = document.getElementById("result");
 const $ = id => document.getElementById(id);
@@ -266,6 +298,7 @@ function done(i) {
   $("rDetail").textContent = ""; $("rDetail").hidden = true;
   $("rNote").hidden = false;
   void result.offsetWidth; result.classList.add("win");
+  winSound(i === 3);
   if (!reduce) confetti(i === 3 ? 280 : 140);
 }
 $("newclient").onclick = () => { if (!spinning) { setIdle(); bits = []; $("settings").hidden = true; } };
