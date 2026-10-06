@@ -16,7 +16,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&display=swap">
 <style>
 html, body { margin: 0; }
-/* Layout: landscape kiosk for a reception tablet — wheel on the left (spin button in its centre), prize card on the right, staff panel behind the gear holds "Novo cliente" and the odds */
+/* Layout: landscape kiosk for a reception tablet — wheel on the left (spin button in its centre), prize card on the right, staff panel behind the gear holds "Novo cliente" and the odds and spin counts */
 :root {
   --bg: #c48a55;
   --surface: rgba(255, 255, 255, .95);
@@ -84,12 +84,24 @@ body {
 /* staff settings */
 .gear { position: fixed; right: 12px; bottom: 12px; width: 40px; height: 40px; border-radius: 50%; border: 0; background: rgba(255,255,255,.35);
   color: var(--fg); font-size: 20px; cursor: pointer; opacity: .5; z-index: 3; }
-.settings { position: fixed; inset: 0; z-index: 6; display: grid; place-items: center; padding: 16px; background: rgba(47,62,74,.55); }
-.panel { background: #fff; border-radius: 20px; padding: 24px; width: min(520px, 100%); display: grid; gap: 14px; user-select: text; }
+.settings { position: fixed; inset: 0; z-index: 8; display: grid; place-items: center; padding: 16px; background: rgba(47,62,74,.55); }
+.panel { background: #fff; border-radius: 20px; padding: 24px; width: min(560px, 100%); max-height: calc(100dvh - 32px); overflow-y: auto; display: grid; gap: 14px; user-select: text; }
 .panel h2 { margin: 0; font-size: 20px; }
-.odd { display: grid; grid-template-columns: 16px minmax(0,1fr) 72px 56px; gap: 10px; align-items: center; font-size: 15px; }
+.odd { display: grid; grid-template-columns: 16px minmax(0,1fr) 136px 56px; gap: 10px; align-items: center; font-size: 15px; }
+.odd.head { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+.odd.head span:nth-child(3), .odd.head span:nth-child(4) { text-align: right; }
+.pctbox { display: flex; align-items: center; gap: 4px; justify-content: flex-end; color: var(--muted); }
+.lock { appearance: none; border: 0; background: none; padding: 4px; width: 30px; height: 30px; border-radius: 8px; color: #b7c6cd; cursor: pointer; display: grid; place-items: center; }
+.lock svg { width: 18px; height: 18px; }
+.lock.on { color: var(--accent); background: #eaf3f7; }
+.count { text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; }
+.stats { display: flex; align-items: baseline; justify-content: space-between; background: #f2f7f9; border-radius: 12px; padding: 12px 16px; }
+.stat-label { font-weight: 700; color: var(--muted); }
+.stat-num { font-size: 32px; font-weight: 900; color: var(--accent); font-variant-numeric: tabular-nums; }
+.odd.sumrow { border-top: 1px solid var(--line); padding-top: 8px; font-weight: 700; }
+.btn.danger { color: #b3261e; border-color: #e8b4b0; }
 .dot { width: 16px; height: 16px; border-radius: 50%; border: 1px solid var(--line); }
-.odd input { width: 72px; padding: 8px; border: 1px solid var(--line); border-radius: 8px; font: inherit; font-variant-numeric: tabular-nums; }
+.odd input { width: 72px; text-align: right; padding: 8px; border: 1px solid var(--line); border-radius: 8px; font: inherit; font-variant-numeric: tabular-nums; }
 .pct { text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; }
 .panel p { margin: 0; font-size: 13px; color: var(--muted); }
 .row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
@@ -134,10 +146,20 @@ button:focus-visible, .hub:focus-visible, input:focus-visible { outline: 3px sol
     </button>
     <p>Limpa o prémio e volta a ativar a roleta para o próximo cliente.</p>
     <hr>
-    <h2>Probabilidades</h2>
-    <div id="odds" style="display:grid;gap:10px"></div>
-    <p>As fatias têm todas o mesmo tamanho. O peso define a probabilidade real de cada prémio e fica guardado neste tablet.</p>
-    <div class="row"><button class="btn" id="reset">Repor probabilidades</button><button class="btn primary" id="done">Fechar</button></div>
+    <div class="stats">
+      <span class="stat-label">Total de jogadas</span>
+      <span class="stat-num" id="totalSpins">0</span>
+    </div>
+    <div class="odds-table">
+      <div class="odd head"><span></span><span>Prémio</span><span>Probabilidade</span><span>Saíram</span></div>
+      <div id="odds" style="display:grid;gap:8px"></div>
+    </div>
+    <p>Ao mudar a percentagem de um prémio, ele fica fixo (cadeado) e os prémios livres ajustam-se sozinhos para somar 100%. Toca no cadeado para o voltar a soltar. As fatias têm todas o mesmo tamanho. Tudo fica guardado neste tablet.</p>
+    <div class="row">
+      <button class="btn" id="resetCounts">Zerar contagens</button>
+      <button class="btn" id="reset">Repor probabilidades</button>
+      <button class="btn primary" id="done">Fechar</button>
+    </div>
   </div>
 </div>
 
@@ -156,6 +178,16 @@ const PRIZES = [
 const DEFAULT_W = PRIZES.map(p => p.w);
 const KEY = "roleta-pesos-v1";
 try { const s = JSON.parse(localStorage.getItem(KEY)); if (Array.isArray(s) && s.length === PRIZES.length) s.forEach((v,i)=> PRIZES[i].w = Math.max(0, +v || 0)); } catch (e) {}
+(function normalise() { const t = PRIZES.reduce((a,p)=>a+p.w,0); if (t > 0) PRIZES.forEach(p => p.w = p.w / t * 100); })();
+// contagens de jogadas (guardadas neste tablet)
+const KEY_STATS = "roleta-contagens-v1";
+let stats = { total: 0, byPrize: PRIZES.map(() => 0) };
+try { const st = JSON.parse(localStorage.getItem(KEY_STATS)); if (st && Array.isArray(st.byPrize) && st.byPrize.length === PRIZES.length) stats = { total: +st.total || 0, byPrize: st.byPrize.map(n => +n || 0) }; } catch (e) {}
+const KEY_LOCK = "roleta-fixos-v1";
+let locked = PRIZES.map(() => false);
+try { const l = JSON.parse(localStorage.getItem(KEY_LOCK)); if (Array.isArray(l) && l.length === PRIZES.length) locked = l.map(Boolean); } catch (e) {}
+function saveLocks() { try { localStorage.setItem(KEY_LOCK, JSON.stringify(locked)); } catch (e) {} }
+function saveStats() { try { localStorage.setItem(KEY_STATS, JSON.stringify(stats)); } catch (e) {} }
 
 const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 const COLORS = ["--s1","--s2","--s3","--s4","--s5","--s6"];
@@ -298,6 +330,7 @@ function done(i) {
   $("rDetail").textContent = ""; $("rDetail").hidden = true;
   $("rNote").hidden = false;
   void result.offsetWidth; result.classList.add("win");
+  stats.total++; stats.byPrize[i]++; saveStats();
   winSound(i === 3);
   if (!reduce) confetti(i === 3 ? 280 : 140);
 }
@@ -324,26 +357,65 @@ function fall() {
 }
 
 // staff settings
+const LOCK_ON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
+const LOCK_OFF = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 7.5-1.9"/></svg>';
+const fmt = n => (Math.round(n * 10) / 10).toLocaleString("pt-PT", { maximumFractionDigits: 1 });
 function renderOdds() {
   const box = document.getElementById("odds");
   box.innerHTML = "";
   PRIZES.forEach((p,i) => {
     const row = document.createElement("div"); row.className = "odd";
     row.innerHTML = `<span class="dot" style="background:var(${COLORS[i]})"></span><span>${p.value} ${p.text.join(" ")}</span>
-      <input id="w${i}" type="number" min="0" step="1" inputmode="numeric" value="${p.w}" aria-label="Peso"><span class="pct"></span>`;
-    row.querySelector("input").addEventListener("input", ev => { PRIZES[i].w = Math.max(0, +ev.target.value || 0); save(); updatePct(); });
+      <span class="pctbox"><button class="lock${locked[i] ? " on" : ""}" aria-pressed="${locked[i]}" aria-label="Fixar ${p.full}" title="${locked[i] ? "Fixo: não muda quando alteras outro prémio" : "Livre: ajusta-se sozinho"}">${locked[i] ? LOCK_ON : LOCK_OFF}</button><input id="w${i}" type="text" inputmode="decimal" aria-label="Probabilidade de ${p.full}">%</span>
+      <span class="count">${stats.byPrize[i]}</span>`;
+    const inp = row.querySelector("input");
+    inp.value = fmt(p.w);
+    inp.addEventListener("focus", () => inp.select());
+    inp.addEventListener("change", () => setPct(i, inp.value));
+    inp.addEventListener("keydown", e => { if (e.key === "Enter") inp.blur(); });
+    row.querySelector(".lock").onclick = () => { locked[i] = !locked[i]; saveLocks(); renderOdds(); };
     box.appendChild(row);
   });
-  updatePct();
+  const sum = document.createElement("div"); sum.className = "odd sumrow";
+  sum.innerHTML = `<span></span><span>Total</span><span class="pctbox">${fmt(PRIZES.reduce((a,p)=>a+p.w,0))}%</span><span class="count">${stats.total}</span>`;
+  box.appendChild(sum);
+  document.getElementById("totalSpins").textContent = stats.total.toLocaleString("pt-PT");
 }
-function updatePct() {
-  const total = PRIZES.reduce((s,p)=>s+p.w,0) || 1;
-  document.querySelectorAll(".odd .pct").forEach((el,i)=> el.textContent = (PRIZES[i].w/total*100).toFixed(1)+"%");
+// muda um prémio e reparte o resto pelos outros, mantendo a proporção entre eles
+function setPct(i, raw) {
+  let v = parseFloat(String(raw).replace(",", "."));
+  if (!isFinite(v)) { renderOdds(); return; }
+  v = Math.min(100, Math.max(0, v));
+  // o prémio alterado fica fixo; o resto reparte-se pelos prémios livres, mantendo a proporção entre eles
+  locked[i] = true;
+  let free = PRIZES.map((_,j) => j).filter(j => j !== i && !locked[j]);
+  if (!free.length) { free = PRIZES.map((_,j) => j).filter(j => j !== i); free.forEach(j => locked[j] = false); }
+  const fixedSum = PRIZES.reduce((a,p,j) => a + (j !== i && !free.includes(j) ? p.w : 0), 0);
+  v = Math.min(v, 100 - fixedSum);
+  const rest = 100 - fixedSum - v, S = free.reduce((a,j)=>a+PRIZES[j].w,0);
+  PRIZES[i].w = v;
+  free.forEach(j => PRIZES[j].w = S > 0 ? PRIZES[j].w / S * rest : rest / free.length);
+  saveLocks();
+  save(); renderOdds();
 }
 function save() { try { localStorage.setItem(KEY, JSON.stringify(PRIZES.map(p=>p.w))); } catch (e) {} }
+// zerar contagens com confirmação na própria página
+let resetArm = null;
+const resetBtn = document.getElementById("resetCounts");
+resetBtn.onclick = () => {
+  if (!resetArm) {
+    resetBtn.textContent = "Toca outra vez para zerar"; resetBtn.classList.add("danger");
+    resetArm = setTimeout(() => { resetArm = null; resetBtn.textContent = "Zerar contagens"; resetBtn.classList.remove("danger"); }, 4000);
+    return;
+  }
+  clearTimeout(resetArm); resetArm = null;
+  stats = { total: 0, byPrize: PRIZES.map(() => 0) }; saveStats(); renderOdds();
+  resetBtn.textContent = "Contagens a zero"; resetBtn.classList.remove("danger");
+  setTimeout(() => resetBtn.textContent = "Zerar contagens", 2500);
+};
 document.getElementById("gear").onclick = () => { renderOdds(); document.getElementById("settings").hidden = false; };
 document.getElementById("done").onclick = () => { document.getElementById("settings").hidden = true; };
-document.getElementById("reset").onclick = () => { DEFAULT_W.forEach((w,i)=>PRIZES[i].w=w); save(); renderOdds(); };
+document.getElementById("reset").onclick = () => { locked = PRIZES.map(() => false); saveLocks(); const t = DEFAULT_W.reduce((a,b)=>a+b,0); DEFAULT_W.forEach((w,i)=>PRIZES[i].w = w / t * 100); save(); renderOdds(); };
 
 hub.onclick = spin;
 document.addEventListener("gesturestart", e => e.preventDefault());
