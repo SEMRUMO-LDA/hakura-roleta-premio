@@ -127,6 +127,15 @@ body {
 .cta:disabled { opacity: .6; }
 .next { margin-top: 1vh; }
 .result.form-mode { align-content: center; }
+.staffnote { width: 100%; display: grid; gap: 8px; }
+.notetoggle { appearance: none; border: 0; background: none; padding: 4px 0; color: var(--muted); font: 700 clamp(13px, 1.8vh, 15px) var(--font); cursor: pointer; justify-self: start; text-decoration: underline; text-underline-offset: 3px; }
+.notebox { display: grid; gap: 8px; }
+.notebox label { font-weight: 700; font-size: clamp(13px, 1.8vh, 15px); }
+.notebox textarea { width: 100%; font: 400 clamp(15px, 2.2vh, 18px) var(--font); color: var(--fg); padding: .6em .8em; border: 2px solid var(--line); border-radius: 12px; resize: none; user-select: text; -webkit-user-select: text; }
+.notebox textarea:focus { border-color: var(--accent); outline: none; }
+.noterow { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.notemsg { color: var(--muted); font-size: 14px; font-weight: 700; }
+body.typing #play .value, body.typing #play .text, body.typing #play .note, body.typing #play .next, body.typing .notetoggle { display: none; }
 /* teclado aberto: caixa sobe, logo esconde */
 body.typing .side { grid-template-rows: auto; align-self: start; }
 body.typing .brand { display: none; }
@@ -158,7 +167,7 @@ button:focus-visible, .hub:focus-visible, input:focus-visible { outline: 3px sol
         <p class="lead">Deixa o teu nome e email para jogar.</p>
         <div class="field"><label for="fNome">Nome</label><input id="fNome" name="nome" autocomplete="name" autocapitalize="words" enterkeyhint="next" maxlength="120" required></div>
         <div class="field"><label for="fEmail">Email</label><input id="fEmail" name="email" type="email" inputmode="email" autocomplete="email" autocapitalize="off" spellcheck="false" enterkeyhint="go" maxlength="200" required></div>
-        <label class="consent" id="consentLabel"><input type="checkbox" id="fConsent"><span>Aceito que a Hakura guarde o meu nome e email para me contactar sobre o prémio e enviar novidades. Posso pedir para apagar os meus dados a qualquer momento.</span></label>
+        <label class="consent" id="consentLabel"><input type="checkbox" id="fConsent"><span>Aceito que a Hakura guarde os meus dados de contacto para me contactar sobre o prémio e enviar novidades. Posso pedir para apagar os meus dados a qualquer momento.</span></label>
         <p class="err" id="formErr" role="alert"></p>
         <button class="cta" id="fSubmit" type="submit">Quero jogar</button>
       </form>
@@ -168,6 +177,14 @@ button:focus-visible, .hub:focus-visible, input:focus-visible { outline: 3px sol
         <span class="text" id="rText"></span>
         <span class="detail" id="rDetail"></span>
         <span class="note" id="rNote" hidden>Mostra este ecrã à nossa equipa para registarmos o teu prémio.</span>
+        <div class="staffnote" id="staffNote" hidden>
+          <button type="button" class="notetoggle" id="noteToggle">+ Nota da equipa</button>
+          <div class="notebox" id="noteBox" hidden>
+            <label for="noteText">Nota da equipa (fica junto a este lead)</label>
+            <textarea id="noteText" rows="3" maxlength="1000" placeholder="Ex.: telemóvel, interesse em pilates, quer marcar avaliação…"></textarea>
+            <div class="noterow"><button type="button" class="btn primary" id="noteSave">Guardar nota</button><span id="noteMsg" class="notemsg"></span></div>
+          </div>
+        </div>
         <button class="cta next" id="nextBtn" hidden>Próximo participante</button>
       </div>
     </div>
@@ -352,6 +369,7 @@ function showForm() {
   result.className = "result form-mode";
   form.hidden = false; play.hidden = true;
   form.reset(); $("formErr").textContent = ""; $("fSubmit").disabled = false;
+  resetNote(); $("staffNote").hidden = true;
   ["fNome","fEmail"].forEach(id => $(id).removeAttribute("aria-invalid")); $("consentLabel").classList.remove("invalid");
   bits = [];
 }
@@ -363,8 +381,20 @@ function showReady() {
   const v = $("rValue"); v.textContent = "Boa sorte!"; v.classList.remove("long");
   $("rText").textContent = "";
   $("rDetail").hidden = false; $("rDetail").innerHTML = "Toca em <b>Girar</b>, no centro da roleta, e descobre o teu prémio.";
-  $("rNote").hidden = true; $("nextBtn").hidden = true;
+  $("rNote").hidden = true; $("nextBtn").hidden = true; resetNote(); $("staffNote").hidden = true;
 }
+function resetNote() { $("noteBox").hidden = true; $("noteToggle").hidden = false; $("noteText").value = ""; $("noteMsg").textContent = ""; $("noteToggle").textContent = "+ Nota da equipa"; }
+$("noteToggle").onclick = () => { $("noteBox").hidden = false; $("noteToggle").hidden = true; $("noteText").focus(); };
+$("noteSave").onclick = () => {
+  if (!current) return;
+  const t = $("noteText").value.trim();
+  recordNote(current.id, t);
+  $("noteText").blur(); document.body.classList.remove("typing");
+  $("noteBox").hidden = true; $("noteToggle").hidden = false;
+  $("noteToggle").textContent = t ? "✓ Nota guardada · editar" : "+ Nota da equipa";
+};
+$("noteText").addEventListener("focus", () => document.body.classList.add("typing"));
+$("noteText").addEventListener("blur", () => setTimeout(() => { if (document.activeElement !== $("noteText")) document.body.classList.remove("typing"); }, 50));
 function spin() {
   if (spinning || used || !current) return;
   spinning = true; used = true; hub.disabled = true; app.classList.remove("ready");
@@ -402,7 +432,7 @@ function done(i) {
   recordPrize(current.id, `${p.value} ${p.full}`);
   winSound(i === MASSAGE);
   if (!reduce) confetti(i === MASSAGE ? 280 : 140);
-  setTimeout(() => { if (!form.hidden) return; $("nextBtn").hidden = false; }, 2500);
+  setTimeout(() => { if (!form.hidden) return; $("nextBtn").hidden = false; $("staffNote").hidden = false; }, 2500);
 }
 $("nextBtn").onclick = () => showForm();
 $("newclient").onclick = () => { if (!spinning) { showForm(); $("settings").hidden = true; } };
@@ -416,17 +446,19 @@ const KEY_QUEUE = "roleta-evento-fila-v1";    // envios pendentes
 let leads = [], queue = [], lastError = "";
 try { leads = JSON.parse(localStorage.getItem(KEY_LEADS)) || []; } catch (e) {}
 try { queue = JSON.parse(localStorage.getItem(KEY_QUEUE)) || []; } catch (e) {}
+// compatibilidade com a versão anterior (tabela "jogadas" deixou de existir: tudo fica na tabela leads)
+queue = queue.map(j => j.path ? j : j.table === "jogadas" ? { path: "rpc/registar_premio", row: { p_lead: j.row.lead_id, p_premio: j.row.premio } } : { path: j.table, row: j.row });
 const saveLeads = () => { try { localStorage.setItem(KEY_LEADS, JSON.stringify(leads)); } catch (e) {} };
 const saveQueue = () => { try { localStorage.setItem(KEY_QUEUE, JSON.stringify(queue)); } catch (e) {} };
 const uuid = () => (crypto.randomUUID ? crypto.randomUUID() : "10000000-1000-4000-8000-100000000000".replace(/[018]/g, c => (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)));
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
-async function sbInsert(table, row) {
+async function sbInsert(path, row) {
   const headers = { apikey: SB_KEY, "Content-Type": "application/json", Prefer: "return=minimal" };
   if (SB_KEY.startsWith("eyJ")) headers.Authorization = "Bearer " + SB_KEY;   // chave anon antiga (JWT)
   const ctl = new AbortController(), to = setTimeout(() => ctl.abort(), 7000);
   try {
-    const r = await fetch(`${SB_URL}/rest/v1/${table}`, { method: "POST", headers, body: JSON.stringify(row), signal: ctl.signal });
+    const r = await fetch(`${SB_URL}/rest/v1/${path}`, { method: "POST", headers, body: JSON.stringify(row), signal: ctl.signal });
     if (r.ok) return "ok";
     if (r.status === 409) return "dup";
     const t = await r.text().catch(() => "");
@@ -438,7 +470,7 @@ async function flush() {
   if (flushing || !sbReady() || !queue.length) { renderSync(); return; }
   flushing = true;
   while (queue.length) {
-    const job = queue[0], res = await sbInsert(job.table, job.row);
+    const job = queue[0], res = await sbInsert(job.path, job.row);
     if (res === "ok" || res === "dup") { queue.shift(); markSent(job); saveQueue(); lastError = ""; continue; }
     lastError = res === "offline" ? "Sem ligação à internet. Os leads ficam guardados e são enviados assim que houver rede." : "O Supabase recusou um envio: " + res.replace("error:", "");
     break;
@@ -446,13 +478,20 @@ async function flush() {
   flushing = false; renderSync();
 }
 function markSent(job) {
-  const id = job.table === "leads" ? job.row.id : job.row.lead_id, l = leads.find(x => x.id === id);
-  if (l) { if (job.table === "leads") l.enviado = true; else l.premioEnviado = true; saveLeads(); }
+  const id = job.path === "leads" ? job.row.id : job.row.p_lead, l = leads.find(x => x.id === id);
+  if (!l) return;
+  if (job.path === "leads") l.enviado = true; else if (job.path === "rpc/registar_premio") l.premioEnviado = true; else l.notaEnviada = true;
+  saveLeads();
 }
-function enqueue(table, row) { queue.push({ table, row }); saveQueue(); }
+function enqueue(path, row) { queue.push({ path, row }); saveQueue(); }
 function recordPrize(leadId, premio) {
   const l = leads.find(x => x.id === leadId); if (l) { l.premio = premio; saveLeads(); }
-  enqueue("jogadas", { lead_id: leadId, premio }); flush();
+  enqueue("rpc/registar_premio", { p_lead: leadId, p_premio: premio }); flush();
+}
+function recordNote(leadId, nota) {
+  const l = leads.find(x => x.id === leadId); if (l) { l.nota = nota; l.notaEnviada = false; saveLeads(); }
+  queue = queue.filter(j => !(j.path === "rpc/registar_nota" && j.row.p_lead === leadId));   // só conta a última versão da nota
+  enqueue("rpc/registar_nota", { p_lead: leadId, p_nota: nota }); flush();
 }
 
 form.addEventListener("submit", async e => {
@@ -492,7 +531,7 @@ $("syncNow").onclick = () => { lastError = ""; flush(); };
 setInterval(flush, 30000); addEventListener("online", flush);
 $("exportCsv").onclick = () => {
   const esc = v => `"${String(v ?? "").replace(/"/g, '""')}"`;
-  const rows = [["Nome","Email","Prémio","Data","Enviado para o Supabase"], ...leads.map(l => [l.nome, l.email, l.premio || "", new Date(l.data).toLocaleString("pt-PT"), l.enviado ? "sim" : "não"])];
+  const rows = [["Nome","Email","Prémio","Nota da equipa","Data","Enviado para o Supabase"], ...leads.map(l => [l.nome, l.email, l.premio || "", l.nota || "", new Date(l.data).toLocaleString("pt-PT"), l.enviado ? "sim" : "não"])];
   const blob = new Blob(["﻿" + rows.map(r => r.map(esc).join(";")).join("\r\n")], { type: "text/csv;charset=utf-8" });
   const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `leads-hakura-${new Date().toISOString().slice(0,10)}.csv`;
   document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
