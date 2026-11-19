@@ -5,5 +5,5 @@
 window.HAKURA_CONFIG = {
   supabaseUrl: "https://lbxnkkctgyekyxnwhpma.supabase.co",
   supabaseKey: "sb_publishable_-YvyWW1aEZHE3okQolILRw_3asgaYee",
-  evento: "Evento Hakura"
+  evento: "APSL Longevity Summit 2026"
 };
