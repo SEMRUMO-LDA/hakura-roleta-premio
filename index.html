@@ -110,12 +110,12 @@ body {
 .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
 
 /* lead form */
-.form { width: 100%; display: grid; gap: 1.6vh; }
-.form h2 { margin: 0; font-weight: 900; font-size: clamp(26px, 4.6vh, 44px); line-height: 1.1; text-wrap: balance; color: var(--fg); }
+.form { width: 100%; display: grid; gap: 1.3vh; }
+.form h2 { margin: 0; font-weight: 900; font-size: clamp(24px, 4.2vh, 42px); line-height: 1.1; text-wrap: balance; color: var(--fg); }
 .form .lead { margin: 0; color: var(--muted); font-size: clamp(15px, 2.3vh, 21px); }
 .field { display: grid; gap: 6px; }
 .field label { font-weight: 700; font-size: clamp(13px, 1.9vh, 16px); color: var(--fg); }
-.field input { width: 100%; font: 400 clamp(17px, 2.6vh, 22px) var(--font); color: var(--fg); padding: .7em .9em; border: 2px solid var(--line); border-radius: 12px; background: #fff; user-select: text; -webkit-user-select: text; }
+.field input { width: 100%; font: 400 clamp(17px, 2.6vh, 22px) var(--font); color: var(--fg); padding: .55em .8em; border: 2px solid var(--line); border-radius: 12px; background: #fff; user-select: text; -webkit-user-select: text; }
 .field input:focus { border-color: var(--accent); outline: none; }
 .field input[aria-invalid="true"] { border-color: #c0392b; }
 .consent { display: grid; grid-template-columns: 26px 1fr; gap: 10px; align-items: start; font-size: clamp(13px, 1.8vh, 15px); color: var(--muted); line-height: 1.4; cursor: pointer; }
@@ -126,7 +126,9 @@ body {
   padding: .85em 1.6em; cursor: pointer; letter-spacing: .02em; justify-self: start; box-shadow: 0 10px 22px -12px rgba(30,70,90,.8); }
 .cta:disabled { opacity: .6; }
 .next { margin-top: 1vh; }
-.result.form-mode { align-content: center; }
+.result.form-mode { align-content: center; padding-block: 3.4vh; }
+.side:has(.form-mode) { gap: 4vh; }
+.form .err:empty { min-height: 0; }
 .staffnote { width: 100%; display: grid; gap: 8px; }
 .notetoggle { appearance: none; border: 0; background: none; padding: 4px 0; color: var(--muted); font: 700 clamp(13px, 1.8vh, 15px) var(--font); cursor: pointer; justify-self: start; text-decoration: underline; text-underline-offset: 3px; }
 .notebox { display: grid; gap: 8px; }
@@ -162,9 +164,9 @@ button:focus-visible, .hub:focus-visible, input:focus-visible { outline: 3px sol
   <div class="side">
     <div class="result form-mode" id="result" aria-live="polite">
       <form class="form" id="leadForm" novalidate>
-        <span class="eyebrow">Roleta de prémios</span>
-        <h2>Gira a roleta e ganha um prémio de bem-estar</h2>
-        <p class="lead">Deixa o teu nome e email para jogar.</p>
+        <span class="eyebrow">Roleta de prémios Hakura</span>
+        <h2>Uma volta, um prémio garantido</h2>
+        <p class="lead">Até 30% de desconto ou uma massagem oferecida. Deixa o teu nome e email para jogar.</p>
         <div class="field"><label for="fNome">Nome</label><input id="fNome" name="nome" autocomplete="name" autocapitalize="words" enterkeyhint="next" maxlength="120" required></div>
         <div class="field"><label for="fEmail">Email</label><input id="fEmail" name="email" type="email" inputmode="email" autocomplete="email" autocapitalize="off" spellcheck="false" enterkeyhint="go" maxlength="200" required></div>
         <label class="consent" id="consentLabel"><input type="checkbox" id="fConsent"><span>Aceito que a Hakura guarde os meus dados de contacto para me contactar sobre o prémio e enviar novidades. Posso pedir para apagar os meus dados a qualquer momento.</span></label>
@@ -176,7 +178,7 @@ button:focus-visible, .hub:focus-visible, input:focus-visible { outline: 3px sol
         <span class="value" id="rValue">Boa sorte!</span>
         <span class="text" id="rText"></span>
         <span class="detail" id="rDetail"></span>
-        <span class="note" id="rNote" hidden>Mostra este ecrã à nossa equipa para registarmos o teu prémio.</span>
+        <span class="note" id="rNote" hidden>O teu prémio já ficou registado. Obrigado por passares pela Hakura!</span>
         <div class="staffnote" id="staffNote" hidden>
           <button type="button" class="notetoggle" id="noteToggle">+ Nota da equipa</button>
           <div class="notebox" id="noteBox" hidden>
