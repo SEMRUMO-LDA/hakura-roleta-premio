@@ -393,8 +393,7 @@ $("noteSave").onclick = () => {
   $("noteBox").hidden = true; $("noteToggle").hidden = false;
   $("noteToggle").textContent = t ? "✓ Nota guardada · editar" : "+ Nota da equipa";
 };
-$("noteText").addEventListener("focus", () => document.body.classList.add("typing"));
-$("noteText").addEventListener("blur", () => setTimeout(() => { if (document.activeElement !== $("noteText")) document.body.classList.remove("typing"); }, 50));
+
 function spin() {
   if (spinning || used || !current) return;
   spinning = true; used = true; hub.disabled = true; app.classList.remove("ready");
@@ -515,8 +514,19 @@ form.addEventListener("submit", async e => {
   showReady(); flush();
 });
 // teclado: sobe a caixa enquanto se escreve
-form.addEventListener("focusin", e => { if (e.target.matches("input[type=text], input[type=email], input:not([type])")) document.body.classList.add("typing"); });
-form.addEventListener("focusout", () => setTimeout(() => { if (!form.contains(document.activeElement) || document.activeElement.type === "checkbox") document.body.classList.remove("typing"); }, 50));
+// teclado do tablet: só muda o layout quando o teclado está mesmo aberto (o ecrã fica mais baixo).
+// Num computador, ou com teclado físico, a caixa não mexe.
+let fullH = Math.max(innerHeight, visualViewport?.height || 0);
+function checkKeyboard() {
+  const h = Math.min(innerHeight, visualViewport?.height || innerHeight);
+  const el = document.activeElement, typingField = el && (el.matches?.("input:not([type=checkbox]), textarea"));
+  if (!typingField && h > fullH * 0.9) fullH = Math.max(fullH, h);   // atualiza a altura de referência (rotação, ecrã inteiro)
+  document.body.classList.toggle("typing", !!typingField && h < fullH * 0.8);
+}
+addEventListener("resize", checkKeyboard); visualViewport?.addEventListener("resize", checkKeyboard);
+addEventListener("orientationchange", () => setTimeout(() => { fullH = Math.max(innerHeight, visualViewport?.height || 0); checkKeyboard(); }, 400));
+document.addEventListener("focusin", () => setTimeout(checkKeyboard, 300));
+document.addEventListener("focusout", () => setTimeout(checkKeyboard, 100));
 $("fNome").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); $("fEmail").focus(); } });
 
 function renderSync() {
