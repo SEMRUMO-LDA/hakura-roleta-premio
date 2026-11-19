@@ -2,8 +2,8 @@
 <html lang="pt">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Roleta de Prémios</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+<title>Roleta de Prémios Hakura</title>
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#5399b5">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
@@ -14,9 +14,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&display=swap">
+<script src="config.js"></script>
 <style>
 html, body { margin: 0; }
-/* Layout: landscape kiosk for a reception tablet — wheel on the left (spin button in its centre), prize card on the right, staff panel behind the gear holds "Novo cliente" and the odds and spin counts */
+/* Layout: landscape kiosk for an event — wheel on the left (spin button in its centre), card on the right: lead form → spin → prize. Staff panel behind the gear: odds, counts, massage limit, leads sync and export */
 :root {
   --bg: #c48a55;
   --surface: rgba(255, 255, 255, .95);
@@ -108,6 +109,34 @@ body {
 .btn { appearance: none; border: 1px solid var(--line); background: #fff; color: var(--fg); border-radius: 10px; padding: 10px 16px; font: 700 14px var(--font); cursor: pointer; }
 .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
 
+/* lead form */
+.form { width: 100%; display: grid; gap: 1.6vh; }
+.form h2 { margin: 0; font-weight: 900; font-size: clamp(26px, 4.6vh, 44px); line-height: 1.1; text-wrap: balance; color: var(--fg); }
+.form .lead { margin: 0; color: var(--muted); font-size: clamp(15px, 2.3vh, 21px); }
+.field { display: grid; gap: 6px; }
+.field label { font-weight: 700; font-size: clamp(13px, 1.9vh, 16px); color: var(--fg); }
+.field input { width: 100%; font: 400 clamp(17px, 2.6vh, 22px) var(--font); color: var(--fg); padding: .7em .9em; border: 2px solid var(--line); border-radius: 12px; background: #fff; user-select: text; -webkit-user-select: text; }
+.field input:focus { border-color: var(--accent); outline: none; }
+.field input[aria-invalid="true"] { border-color: #c0392b; }
+.consent { display: grid; grid-template-columns: 26px 1fr; gap: 10px; align-items: start; font-size: clamp(13px, 1.8vh, 15px); color: var(--muted); line-height: 1.4; cursor: pointer; }
+.consent input { width: 24px; height: 24px; margin: 0; accent-color: var(--accent); }
+.consent.invalid { color: #c0392b; }
+.form .err { color: #c0392b; font-weight: 700; font-size: clamp(14px, 2vh, 17px); min-height: 1.2em; margin: 0; }
+.cta { appearance: none; border: 0; border-radius: 999px; background: var(--accent); color: #fff; font: 900 clamp(18px, 2.8vh, 24px) var(--font);
+  padding: .85em 1.6em; cursor: pointer; letter-spacing: .02em; justify-self: start; box-shadow: 0 10px 22px -12px rgba(30,70,90,.8); }
+.cta:disabled { opacity: .6; }
+.next { margin-top: 1vh; }
+.result.form-mode { align-content: center; }
+/* teclado aberto: caixa sobe, logo esconde */
+body.typing .side { grid-template-rows: auto; align-self: start; }
+body.typing .brand { display: none; }
+body.typing .result { min-height: 0; padding-block: 2.4vh; }
+body.typing .form h2, body.typing .form .lead, body.typing .result .eyebrow { display: none; }
+.sync { display: grid; gap: 8px; background: #f2f7f9; border-radius: 12px; padding: 12px 16px; font-size: 14px; }
+.sync b { font-variant-numeric: tabular-nums; }
+.sync .warn { color: #b3261e; font-weight: 700; }
+.capbox { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 15px; }
+.capbox input { width: 64px; text-align: right; padding: 8px; border: 1px solid var(--line); border-radius: 8px; font: inherit; }
 button:focus-visible, .hub:focus-visible, input:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
 #confetti { position: fixed; inset: 0; pointer-events: none; z-index: 7; width: 100%; height: 100%; }
 @media (prefers-reduced-motion: reduce) { .result.win .value, .ready .hub { animation: none; } }
@@ -122,12 +151,25 @@ button:focus-visible, .hub:focus-visible, input:focus-visible { outline: 3px sol
     <button class="hub" id="hub" aria-label="Girar a roleta">Girar</button>
   </div>
   <div class="side">
-    <div class="result idle" id="result" aria-live="polite">
-      <span class="eyebrow" id="rEyebrow">A Hakura faz 2 anos</span>
-      <span class="value" id="rValue">Boa sorte!</span>
-      <span class="text" id="rText"></span>
-      <span class="detail" id="rDetail">Para celebrar, temos um prémio para ti. Toca em <b>Girar</b>, no centro da roleta.</span>
-      <span class="note" id="rNote" hidden>Obrigado por fazeres parte destes 2 anos! Fala com a nossa equipa para agendar.</span>
+    <div class="result form-mode" id="result" aria-live="polite">
+      <form class="form" id="leadForm" novalidate>
+        <span class="eyebrow">Roleta de prémios</span>
+        <h2>Gira a roleta e ganha um prémio de bem-estar</h2>
+        <p class="lead">Deixa o teu nome e email para jogar.</p>
+        <div class="field"><label for="fNome">Nome</label><input id="fNome" name="nome" autocomplete="name" autocapitalize="words" enterkeyhint="next" maxlength="120" required></div>
+        <div class="field"><label for="fEmail">Email</label><input id="fEmail" name="email" type="email" inputmode="email" autocomplete="email" autocapitalize="off" spellcheck="false" enterkeyhint="go" maxlength="200" required></div>
+        <label class="consent" id="consentLabel"><input type="checkbox" id="fConsent"><span>Aceito que a Hakura guarde o meu nome e email para me contactar sobre o prémio e enviar novidades. Posso pedir para apagar os meus dados a qualquer momento.</span></label>
+        <p class="err" id="formErr" role="alert"></p>
+        <button class="cta" id="fSubmit" type="submit">Quero jogar</button>
+      </form>
+      <div id="play" hidden style="display:contents">
+        <span class="eyebrow" id="rEyebrow"></span>
+        <span class="value" id="rValue">Boa sorte!</span>
+        <span class="text" id="rText"></span>
+        <span class="detail" id="rDetail"></span>
+        <span class="note" id="rNote" hidden>Mostra este ecrã à nossa equipa para registarmos o teu prémio.</span>
+        <button class="cta next" id="nextBtn" hidden>Próximo participante</button>
+      </div>
     </div>
     <header class="brand">
       <h1 style="margin:0"><img class="logo" src="img/Hakura_Logo_Branco_Tagline.png" alt="Hakura, Clínica de Bem-Estar"></h1>
@@ -142,14 +184,21 @@ button:focus-visible, .hub:focus-visible, input:focus-visible { outline: 3px sol
   <div class="panel">
     <button class="btn primary big" id="newclient">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>
-      Novo cliente
+      Novo participante
     </button>
-    <p>Limpa o prémio e volta a ativar a roleta para o próximo cliente.</p>
+    <p>Limpa o ecrã e volta ao formulário para o próximo participante.</p>
+    <div class="sync" id="sync"></div>
+    <div class="row" style="justify-content:flex-start">
+      <button class="btn" id="syncNow">Enviar agora</button>
+      <button class="btn" id="exportCsv">Exportar leads (CSV)</button>
+      <button class="btn" id="wipeLeads">Apagar leads deste tablet</button>
+    </div>
     <hr>
     <div class="stats">
       <span class="stat-label">Total de jogadas</span>
       <span class="stat-num" id="totalSpins">0</span>
     </div>
+    <div class="capbox"><span><b>Limite de massagens</b> · já saíram <b id="capCount">0</b></span><input id="capInput" type="text" inputmode="numeric" aria-label="Limite de massagens"></div>
     <div class="odds-table">
       <div class="odd head"><span></span><span>Prémio</span><span>Probabilidade</span><span>Saíram</span></div>
       <div id="odds" style="display:grid;gap:8px"></div>
@@ -168,22 +217,23 @@ button:focus-visible, .hub:focus-visible, input:focus-visible { outline: 3px sol
 <script>
 // value = linha grande; text = linha(s) pequena(s) por baixo — mesma ordem em todos os prémios
 const PRIZES = [
-  { value: "20%",    text: ["HIFU"],                   full: "em tratamento HIFU",               detail: "Desconto de 20% num tratamento HIFU.",                       w: 19 },
-  { value: "10€",    text: ["Vale"],                   full: "Vale para qualquer especialidade", detail: "Vale de 10€ para usar em qualquer especialidade da Hakura.",                w: 19 },
-  { value: "15%",    text: ["Fisioterapia"],           full: "numa sessão de fisioterapia",      detail: "Desconto de 15% numa sessão de fisioterapia.",               w: 19 },
-  { value: "50%",    text: ["Massagem", "relaxamento"], full: "numa massagem de relaxamento (50 min)", detail: "Desconto de 50% numa massagem de relaxamento de 50 minutos.", w: 5 },
-  { value: "25%",    text: ["Pilates"],                full: "em aula de pilates",               detail: "Desconto de 25% numa aula de pilates.",                      w: 19 },
-  { value: "30%",    text: ["Massagens", "terapêuticas"], full: "em massagens terapêuticas",     detail: "Desconto de 30% em massagens terapêuticas.",                 w: 19 },
+  { value: "20%",    text: ["HIFU"],                      full: "em tratamento HIFU",               w: 19.8 },
+  { value: "10€",    text: ["Vale"],                      full: "Vale para qualquer especialidade", w: 19.8 },
+  { value: "15%",    text: ["Fisioterapia"],              full: "numa sessão de fisioterapia",      w: 19.8 },
+  { value: "Oferta", text: ["Massagem", "50 min"],        full: "Massagem de relaxamento (50 min)", w: 1 },
+  { value: "25%",    text: ["Pilates"],                   full: "em aula de pilates",               w: 19.8 },
+  { value: "30%",    text: ["Massagens", "terapêuticas"], full: "em massagens terapêuticas",        w: 19.8 },
 ];
+const MASSAGE = 3;
 const DEFAULT_W = PRIZES.map(p => p.w);
-const KEY = "roleta-pesos-v1";
+const KEY = "roleta-evento-pesos-v1";
 try { const s = JSON.parse(localStorage.getItem(KEY)); if (Array.isArray(s) && s.length === PRIZES.length) s.forEach((v,i)=> PRIZES[i].w = Math.max(0, +v || 0)); } catch (e) {}
 (function normalise() { const t = PRIZES.reduce((a,p)=>a+p.w,0); if (t > 0) PRIZES.forEach(p => p.w = p.w / t * 100); })();
 // contagens de jogadas (guardadas neste tablet)
-const KEY_STATS = "roleta-contagens-v1";
+const KEY_STATS = "roleta-evento-contagens-v1";
 let stats = { total: 0, byPrize: PRIZES.map(() => 0) };
 try { const st = JSON.parse(localStorage.getItem(KEY_STATS)); if (st && Array.isArray(st.byPrize) && st.byPrize.length === PRIZES.length) stats = { total: +st.total || 0, byPrize: st.byPrize.map(n => +n || 0) }; } catch (e) {}
-const KEY_LOCK = "roleta-fixos-v1";
+const KEY_LOCK = "roleta-evento-fixos-v1";
 let locked = PRIZES.map(() => false);
 try { const l = JSON.parse(localStorage.getItem(KEY_LOCK)); if (Array.isArray(l) && l.length === PRIZES.length) locked = l.map(Boolean); } catch (e) {}
 function saveLocks() { try { localStorage.setItem(KEY_LOCK, JSON.stringify(locked)); } catch (e) {} }
@@ -231,12 +281,18 @@ function draw() {
   }
 }
 
+// limite de massagens (por defeito 1); quando é atingido a fatia fica na roleta mas não sai
+const KEY_CAP = "roleta-evento-limite-massagem-v1";
+let massageCap = 1;
+try { const c = localStorage.getItem(KEY_CAP); if (c !== null && isFinite(+c)) massageCap = Math.max(0, Math.floor(+c)); } catch (e) {}
+const massageAllowed = () => stats.byPrize[MASSAGE] < massageCap;
 function pick() {
-  const total = PRIZES.reduce((s,p)=>s+p.w,0);
-  if (total <= 0) return Math.floor(Math.random()*N);
+  const w = PRIZES.map((p,i) => (i === MASSAGE && !massageAllowed()) ? 0 : p.w);
+  const total = w.reduce((a,b)=>a+b,0);
+  if (total <= 0) { const ok = PRIZES.map((_,i)=>i).filter(i => i !== MASSAGE || massageAllowed()); return ok[Math.floor(Math.random()*ok.length)]; }
   let r = Math.random()*total;
-  for (let i = 0; i < N; i++) { r -= PRIZES[i].w; if (r < 0) return i; }
-  return N-1;
+  for (let i = 0; i < N; i++) { r -= w[i]; if (r < 0) return i; }
+  return w.findLastIndex(x => x > 0);
 }
 
 let actx = null;
@@ -286,27 +342,39 @@ function winSound(special) {
 const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const app = document.getElementById("app"), hub = document.getElementById("hub"), result = document.getElementById("result");
 const $ = id => document.getElementById(id);
-let used = false;
-function setIdle() {
-  used = false; hub.disabled = false; hub.textContent = "Girar"; app.classList.add("ready");
+let used = true;            // só se pode girar depois de preencher o formulário
+let current = null;         // participante atual { id, nome, email }
+const form = $("leadForm"), play = $("play");
+const firstName = n => n.trim().split(/\s+/)[0];
+
+function showForm() {
+  used = true; current = null; hub.disabled = true; hub.textContent = "Girar"; app.classList.remove("ready");
+  result.className = "result form-mode";
+  form.hidden = false; play.hidden = true;
+  form.reset(); $("formErr").textContent = ""; $("fSubmit").disabled = false;
+  ["fNome","fEmail"].forEach(id => $(id).removeAttribute("aria-invalid")); $("consentLabel").classList.remove("invalid");
+  bits = [];
+}
+function showReady() {
+  used = false; hub.disabled = false; app.classList.add("ready");
   result.className = "result idle";
-  $("rEyebrow").textContent = "A Hakura faz 2 anos";
+  form.hidden = true; play.hidden = false;
+  $("rEyebrow").textContent = `Olá, ${firstName(current.nome)}!`;
   const v = $("rValue"); v.textContent = "Boa sorte!"; v.classList.remove("long");
   $("rText").textContent = "";
-  $("rDetail").hidden = false; $("rDetail").innerHTML = "Para celebrar, temos um prémio para ti. Toca em <b>Girar</b>, no centro da roleta.";
-  $("rNote").hidden = true;
+  $("rDetail").hidden = false; $("rDetail").innerHTML = "Toca em <b>Girar</b>, no centro da roleta, e descobre o teu prémio.";
+  $("rNote").hidden = true; $("nextBtn").hidden = true;
 }
 function spin() {
-  if (spinning || used) return;
+  if (spinning || used || !current) return;
   spinning = true; used = true; hub.disabled = true; app.classList.remove("ready");
-  result.className = "result idle";
   $("rEyebrow").textContent = "A girar…";
-  $("rValue").textContent = "Boa sorte!"; $("rDetail").hidden = false; $("rDetail").textContent = "Vamos ver onde a roleta pára.";
+  $("rDetail").textContent = "Vamos ver onde a roleta pára.";
   const win = pick();
   const jitter = (Math.random() - 0.5) * SEG * 0.7;
-  const current = ((rot % (Math.PI*2)) + Math.PI*2) % (Math.PI*2);
+  const cur = ((rot % (Math.PI*2)) + Math.PI*2) % (Math.PI*2);
   const target = (Math.PI*2 - win*SEG - jitter) % (Math.PI*2);
-  let delta = target - current; if (delta < 0) delta += Math.PI*2;
+  let delta = target - cur; if (delta < 0) delta += Math.PI*2;
   delta += Math.PI*2 * (reduce ? 1 : 6);
   const start = rot, dur = reduce ? 1200 : 5600, t0 = performance.now();
   let lastSeg = Math.floor((rot + SEG/2) / SEG);
@@ -324,17 +392,118 @@ function done(i) {
   spinning = false; hub.textContent = "✓";
   const p = PRIZES[i];
   result.className = "result";
-  $("rEyebrow").textContent = "Parabéns! Ganhaste";
+  $("rEyebrow").textContent = `Parabéns, ${firstName(current.nome)}! Ganhaste`;
   const v = $("rValue"); v.textContent = p.value; v.classList.toggle("long", p.value.length > 4);
   $("rText").textContent = p.full;
   $("rDetail").textContent = ""; $("rDetail").hidden = true;
   $("rNote").hidden = false;
   void result.offsetWidth; result.classList.add("win");
   stats.total++; stats.byPrize[i]++; saveStats();
-  winSound(i === 3);
-  if (!reduce) confetti(i === 3 ? 280 : 140);
+  recordPrize(current.id, `${p.value} ${p.full}`);
+  winSound(i === MASSAGE);
+  if (!reduce) confetti(i === MASSAGE ? 280 : 140);
+  setTimeout(() => { if (!form.hidden) return; $("nextBtn").hidden = false; }, 2500);
 }
-$("newclient").onclick = () => { if (!spinning) { setIdle(); bits = []; $("settings").hidden = true; } };
+$("nextBtn").onclick = () => showForm();
+$("newclient").onclick = () => { if (!spinning) { showForm(); $("settings").hidden = true; } };
+
+// ---------- leads: formulário, cópia local e envio para o Supabase ----------
+const CFG = window.HAKURA_CONFIG || {};
+const SB_URL = (CFG.supabaseUrl || "").replace(/\/+$/, ""), SB_KEY = CFG.supabaseKey || "", EVENTO = CFG.evento || "Evento Hakura";
+const sbReady = () => !!(SB_URL && SB_KEY);
+const KEY_LEADS = "roleta-evento-leads-v1";   // cópia local de segurança (para exportar)
+const KEY_QUEUE = "roleta-evento-fila-v1";    // envios pendentes
+let leads = [], queue = [], lastError = "";
+try { leads = JSON.parse(localStorage.getItem(KEY_LEADS)) || []; } catch (e) {}
+try { queue = JSON.parse(localStorage.getItem(KEY_QUEUE)) || []; } catch (e) {}
+const saveLeads = () => { try { localStorage.setItem(KEY_LEADS, JSON.stringify(leads)); } catch (e) {} };
+const saveQueue = () => { try { localStorage.setItem(KEY_QUEUE, JSON.stringify(queue)); } catch (e) {} };
+const uuid = () => (crypto.randomUUID ? crypto.randomUUID() : "10000000-1000-4000-8000-100000000000".replace(/[018]/g, c => (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)));
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
+async function sbInsert(table, row) {
+  const headers = { apikey: SB_KEY, "Content-Type": "application/json", Prefer: "return=minimal" };
+  if (SB_KEY.startsWith("eyJ")) headers.Authorization = "Bearer " + SB_KEY;   // chave anon antiga (JWT)
+  const ctl = new AbortController(), to = setTimeout(() => ctl.abort(), 7000);
+  try {
+    const r = await fetch(`${SB_URL}/rest/v1/${table}`, { method: "POST", headers, body: JSON.stringify(row), signal: ctl.signal });
+    if (r.ok) return "ok";
+    if (r.status === 409) return "dup";
+    const t = await r.text().catch(() => "");
+    return "error:" + r.status + " " + t.slice(0, 160);
+  } catch (e) { return "offline"; } finally { clearTimeout(to); }
+}
+let flushing = false;
+async function flush() {
+  if (flushing || !sbReady() || !queue.length) { renderSync(); return; }
+  flushing = true;
+  while (queue.length) {
+    const job = queue[0], res = await sbInsert(job.table, job.row);
+    if (res === "ok" || res === "dup") { queue.shift(); markSent(job); saveQueue(); lastError = ""; continue; }
+    lastError = res === "offline" ? "Sem ligação à internet. Os leads ficam guardados e são enviados assim que houver rede." : "O Supabase recusou um envio: " + res.replace("error:", "");
+    break;
+  }
+  flushing = false; renderSync();
+}
+function markSent(job) {
+  const id = job.table === "leads" ? job.row.id : job.row.lead_id, l = leads.find(x => x.id === id);
+  if (l) { if (job.table === "leads") l.enviado = true; else l.premioEnviado = true; saveLeads(); }
+}
+function enqueue(table, row) { queue.push({ table, row }); saveQueue(); }
+function recordPrize(leadId, premio) {
+  const l = leads.find(x => x.id === leadId); if (l) { l.premio = premio; saveLeads(); }
+  enqueue("jogadas", { lead_id: leadId, premio }); flush();
+}
+
+form.addEventListener("submit", async e => {
+  e.preventDefault();
+  const nome = $("fNome").value.trim().replace(/\s+/g, " "), email = $("fEmail").value.trim().toLowerCase(), ok = $("fConsent").checked;
+  const err = m => { $("formErr").textContent = m; };
+  $("fNome").setAttribute("aria-invalid", nome.length < 2); $("fEmail").setAttribute("aria-invalid", !EMAIL_RE.test(email)); $("consentLabel").classList.toggle("invalid", !ok);
+  if (nome.length < 2) return err("Escreve o teu nome.");
+  if (!EMAIL_RE.test(email)) return err("Confirma o teu email, parece ter um erro.");
+  if (!ok) return err("Para jogar, tens de aceitar o tratamento dos teus dados.");
+  if (leads.some(l => l.email === email)) return err("Este email já participou. Cada pessoa só pode jogar uma vez.");
+  $("fSubmit").disabled = true; err("");
+  const lead = { id: uuid(), nome, email, consentimento: true, evento: EVENTO };
+  let res = "offline";
+  if (sbReady() && !queue.length) { $("fSubmit").textContent = "Um momento…"; res = await sbInsert("leads", lead); $("fSubmit").textContent = "Quero jogar"; }
+  if (res === "dup") { $("fSubmit").disabled = false; return err("Este email já participou. Cada pessoa só pode jogar uma vez."); }
+  if (res !== "ok") { enqueue("leads", lead); if (res.startsWith("error:")) lastError = "O Supabase recusou um envio: " + res.replace("error:", ""); }
+  leads.push({ id: lead.id, nome, email, data: new Date().toISOString(), enviado: res === "ok" }); saveLeads();
+  current = { id: lead.id, nome, email };
+  document.activeElement?.blur(); document.body.classList.remove("typing");
+  showReady(); flush();
+});
+// teclado: sobe a caixa enquanto se escreve
+form.addEventListener("focusin", e => { if (e.target.matches("input[type=text], input[type=email], input:not([type])")) document.body.classList.add("typing"); });
+form.addEventListener("focusout", () => setTimeout(() => { if (!form.contains(document.activeElement) || document.activeElement.type === "checkbox") document.body.classList.remove("typing"); }, 50));
+$("fNome").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); $("fEmail").focus(); } });
+
+function renderSync() {
+  const box = $("sync"); if (!box) return;
+  const sent = leads.filter(l => l.enviado).length, pend = queue.length;
+  box.innerHTML = `<div>Leads neste tablet: <b>${leads.length}</b> · enviados para o Supabase: <b>${sent}</b> · envios pendentes: <b>${pend}</b></div>`
+    + (!sbReady() ? `<div class="warn">O Supabase ainda não está configurado (ficheiro config.js). Os leads ficam só neste tablet.</div>` : "")
+    + (lastError ? `<div class="warn">${lastError.replace(/</g, "&lt;")}</div>` : "");
+  $("wipeLeads").disabled = pend > 0;
+}
+$("syncNow").onclick = () => { lastError = ""; flush(); };
+setInterval(flush, 30000); addEventListener("online", flush);
+$("exportCsv").onclick = () => {
+  const esc = v => `"${String(v ?? "").replace(/"/g, '""')}"`;
+  const rows = [["Nome","Email","Prémio","Data","Enviado para o Supabase"], ...leads.map(l => [l.nome, l.email, l.premio || "", new Date(l.data).toLocaleString("pt-PT"), l.enviado ? "sim" : "não"])];
+  const blob = new Blob(["﻿" + rows.map(r => r.map(esc).join(";")).join("\r\n")], { type: "text/csv;charset=utf-8" });
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `leads-hakura-${new Date().toISOString().slice(0,10)}.csv`;
+  document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+};
+let wipeArm = null;
+$("wipeLeads").onclick = () => {
+  const b = $("wipeLeads");
+  if (queue.length) return;
+  if (!wipeArm) { b.textContent = "Toca outra vez para apagar"; b.classList.add("danger"); wipeArm = setTimeout(() => { wipeArm = null; b.textContent = "Apagar leads deste tablet"; b.classList.remove("danger"); }, 4000); return; }
+  clearTimeout(wipeArm); wipeArm = null; leads = []; saveLeads(); b.textContent = "Apagar leads deste tablet"; b.classList.remove("danger"); renderSync();
+};
 
 // confetti
 const cf = document.getElementById("confetti"), cc = cf.getContext("2d");
@@ -380,6 +549,9 @@ function renderOdds() {
   sum.innerHTML = `<span></span><span>Total</span><span class="pctbox">${fmt(PRIZES.reduce((a,p)=>a+p.w,0))}%</span><span class="count">${stats.total}</span>`;
   box.appendChild(sum);
   document.getElementById("totalSpins").textContent = stats.total.toLocaleString("pt-PT");
+  $("capCount").textContent = stats.byPrize[MASSAGE];
+  $("capInput").value = massageCap;
+  renderSync();
 }
 // muda um prémio e reparte o resto pelos outros, mantendo a proporção entre eles
 function setPct(i, raw) {
@@ -413,6 +585,8 @@ resetBtn.onclick = () => {
   resetBtn.textContent = "Contagens a zero"; resetBtn.classList.remove("danger");
   setTimeout(() => resetBtn.textContent = "Zerar contagens", 2500);
 };
+$("capInput").addEventListener("change", e => { const v = Math.floor(+String(e.target.value).replace(",", ".")); if (isFinite(v) && v >= 0) { massageCap = v; try { localStorage.setItem(KEY_CAP, String(v)); } catch (er) {} } renderOdds(); });
+$("capInput").addEventListener("keydown", e => { if (e.key === "Enter") e.target.blur(); });
 document.getElementById("gear").onclick = () => { renderOdds(); document.getElementById("settings").hidden = false; };
 document.getElementById("done").onclick = () => { document.getElementById("settings").hidden = true; };
 document.getElementById("reset").onclick = () => { locked = PRIZES.map(() => false); saveLocks(); const t = DEFAULT_W.reduce((a,b)=>a+b,0); DEFAULT_W.forEach((w,i)=>PRIZES[i].w = w / t * 100); save(); renderOdds(); };
@@ -432,6 +606,7 @@ document.addEventListener("click", () => {
 
 draw();
 if (document.fonts) document.fonts.ready.then(draw);
+showForm(); flush();
 </script>
 </body>
 </html>
